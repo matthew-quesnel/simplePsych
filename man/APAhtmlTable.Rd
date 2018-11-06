@@ -7,8 +7,8 @@
 APAhtmlTable(df = NULL, round = TRUE, tidy = TRUE, digits = 3,
   genNote = NULL, font = "Times New Roman", fontSize = 12,
   tableNum = NULL, tableTitle = NULL, headerBold = FALSE,
-  headerAlign = "center", leftColAlign = "left", contentAlign = "center",
-  header = NULL)
+  headerAlign = "center", leftColAlign = "left",
+  contentAlign = "center", header = NULL)
 }
 \arguments{
 \item{df}{Data Frame or Function output to print in an APA formatted HTML table. Defaults to NULL.}

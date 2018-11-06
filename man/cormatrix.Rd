@@ -4,9 +4,10 @@
 \alias{cormatrix}
 \title{A Function to Create a Correlation Matrix}
 \usage{
-cormatrix(ivs = NULL, data = "NULL", method = "pearson", output = "r",
-  means = FALSE, columnnames = TRUE, CI = FALSE, CIlevel = 0.95,
-  displayDF = FALSE, displayP = FALSE, showSig = TRUE, digits = 3)
+cormatrix(ivs = NULL, data = "NULL", method = "pearson",
+  output = "r", means = FALSE, columnnames = TRUE, CI = FALSE,
+  CIlevel = 0.95, displayDF = FALSE, displayP = FALSE,
+  showSig = TRUE, digits = 3)
 }
 \arguments{
 \item{ivs}{List of variables from which to compute all pairwise correlations. Input must be a list (i.e., c("var1","var2")). Defaults to NULL.}

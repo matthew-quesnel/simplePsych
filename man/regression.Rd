@@ -4,9 +4,10 @@
 \alias{regression}
 \title{Linear Regression and Related Functions}
 \usage{
-regression(y = NULL, model = NULL, simple.slopes = NULL, conf = 0.95,
-  digits = 3, output = "r", assumptions = TRUE, data = NULL,
-  boot = NULL, boottype = "perc", bootci = 0.95, plot = FALSE)
+regression(y = NULL, model = NULL, simple.slopes = NULL,
+  conf = 0.95, digits = 3, output = "r", assumptions = TRUE,
+  data = NULL, boot = NULL, boottype = "perc", bootci = 0.95,
+  plot = FALSE)
 }
 \arguments{
 \item{digits}{Number of digits you want to round numbers too. Leave blank if you don't want to round numbers or if the Data Frame contains strings. Defaults to NULL.}

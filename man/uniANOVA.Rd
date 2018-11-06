@@ -2,7 +2,7 @@
 % Please edit documentation in R/uniANOVA.R
 \name{uniANOVA}
 \alias{uniANOVA}
-\title{A Function to Create APA Formatted HTML Tables}
+\title{A Function to Conduct Univariate Analysis of (Co)Variance.}
 \usage{
 uniANOVA(dv = NULL, formula = NULL, factors = NULL, cov = NULL,
   data = NULL, descriptives = TRUE, assumptions = FALSE, ss = 3,
@@ -53,7 +53,7 @@ uniANOVA(dv = NULL, formula = NULL, factors = NULL, cov = NULL,
 \item{postcor}{A string indicating type of correction to apply to main or simple effects tests requested using the "comparisons=" commond. Options include "none", tukey", "scheffe", "sidak", "bonferroni", "dunnettx", "mvt". Defaults to "none".}
 }
 \description{
-This function conducts a univariate analysis of variance/covariance (ANOVA/ANCOVA). It includes options to print descriptives, tests and plots of model assumptions, estimated marginal means, main and simple effects tests, and APA formatted bar plots.
+This function conducts a univariate analysis of (co)variance (ANOVA/ANCOVA). It includes options to print descriptives, tests and plots of model assumptions, estimated marginal means, main and simple effects tests, and APA formatted bar plots.
 }
 \examples{
 uniANOVA(dv = "mpg", factors = c("vs","am"), cov=c("hp"), data = mtcars, descriptives=TRUE, assumptions=TRUE, ss=3, digits=3, emmeans=TRUE, conf=.95, comparisons=c("am","vs","vs*am"), plotBar=TRUE, xLabel="Engine", yLabel="Miles per Gallon (US)", fillLabel="Transmission" yLower=10,yUpper=45,yBreaks=5,output = "html").

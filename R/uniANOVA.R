@@ -1,6 +1,6 @@
-#' A Function to Create APA Formatted HTML Tables
+#' A Function to Conduct Univariate Analysis of (Co)Variance.
 #'
-#' This function conducts a univariate analysis of variance/covariance (ANOVA/ANCOVA). It includes options to print descriptives, tests and plots of model assumptions, estimated marginal means, main and simple effects tests, and APA formatted bar plots.
+#' This function conducts a univariate analysis of (co)variance (ANOVA/ANCOVA). It includes options to print descriptives, tests and plots of model assumptions, estimated marginal means, main and simple effects tests, and APA formatted bar plots.
 #' @param dv Dependent variable. Defaults to NULL.
 #' @param factors Independent variables (converted to factors). All factors will be multiplied in a full-factorial design. Any factors that you do not wish to be crossed with the others should be entere using the "cov=" command. Defaults to NULL.
 #' @param cov Independent variables and/or covariates not to be crossed with other factors. These variables will also not be used for grouping in descriptive statistics. You may still utilize these factors in simple and main effects tests using the "comparisons=" command. Defaults to NULL.
@@ -399,7 +399,6 @@ ef_eta <- function(t=NULL,f=NULL,sumsq_error=NULL,dfeffect=1,dferror=NULL){
 
 #Ouput Post Hoc Comparisons
 postHocComparisons <- function(compfactors=NULL,model.aov2=NULL,output="html", postCorr="none", data=data, SS_error=NULL, n=NULL, digits=3, conf=.95){
-  #by4 <- by5
   by4 <- as.list(strsplit(compfactors, "[*]")[[1]])
   by5 <- by4
 

@@ -23,6 +23,7 @@
 #' @import car
 #' @import ggplot2
 #' @import jmvcore
+#' @import jtools
 #' @examples
 #' cormatrix(ivs = c("mpg","wt","hp"), data=mtcars, digits=3, output="html", columnnames = FALSE, CI=TRUE, CIlevel=.95, displayDF=TRUE, displayP=TRUE, showSig=TRUE)
 
@@ -42,7 +43,7 @@ regression <- function(y=NULL,
 
   if (is.null(data)) stop('No dataframe provided')
   #if (is.null(y)) stop('No dependent variable provided')
-  if (is.null(model)) stop('No independent variables provided')
+  if (is.null(model)) stop('No model provided')
 
   lm.model.object2 <- list()
   modelnum <- 0
@@ -66,9 +67,11 @@ regression <- function(y=NULL,
 
   if(length(model)>1){
     modelcompare <- do.call(anova, lm.model.object2)
+    class(modelcompare)
     rownames(modelcompare) <- modelname
-    modelcompare <- tidy(modelcompare)
-    modelcompare <- rename(modelcompare, c("term"="Model","res.df"= "Residual df","rss"="Residual Sum Sq","sumsq"="Sum Sq","statistic"="F","p.value"="p"))
+    #modelcompare <- broom::tidy(modelcompare)
+    modelcompare <- as.data.frame(modelcompare)
+    modelcompare <- plyr::rename(modelcompare, c("Res.Df"= "Residual Df","RSS"="Residual Sum Sq","Pr(>F)"="p"))
 
     ##Round p-values and remove "NAs"
     modelcompare <- round_df(modelcompare,digits)
@@ -78,7 +81,7 @@ regression <- function(y=NULL,
 
     if (output=="r"){
       cat("Model Comparison \n", sep = "\n")
-      print(modelcompare, row.names = FALSE)
+      print(modelcompare)
     }else if (output=="html"){
       cat(APAhtmlTable(modelcompare, round = FALSE, tidy=FALSE, digits=digits, tableTitle="Model Comparison"))
     }
@@ -244,48 +247,71 @@ regression <- function(y=NULL,
     #Calculate simple slopes
     slopemeans <- NULL
     slopetest <- NULL
-    slopesT <- FALSE
-    atval <- list() #vector("list",length(simple.slopes))
-    #atval <- "list("
-    lsformula <- paste("~",paste(simple.slopes,collapse=":"))
-    for(var in simple.slopes){
-      unique_x <- length(unique(data[[var]]))
+    #slopesT <- FALSE
+    # atval <- list() #vector("list",length(simple.slopes))
+    # #atval <- "list("
+    # lsformula <- paste("~",paste(simple.slopes,collapse=":"))
 
-      if(unique_x==2){
-        #Add parameters to list for at= command
-        atval[[var]] <- c(0,1)
-      }else{
-        plusSD <- 0
-        minusSD <- 1
-        #print(sd(data[[var]]))
-        #plusSD <- mean(data[,var])+sd(data[[var]])
-        #minusSD <- mean(data[[,var])-sd(data[[var]])
-        plusSD <- mean(data[[var]])+sd(data[[var]])
-        minusSD <- mean(data[[var]])-sd(data[[var]])
-        slopeval <- list(round(minusSD,digits),round(plusSD,digits))
+   #print(simpleTest(model=lm.model.object,simple.slopes=simple.slopes, data=data, digits=digits))
 
 
-        #Add parameters to list for at= command
-        atval[[var]] <- c(as.numeric(slopeval[1]),as.numeric(slopeval[2]))
-      }
-    }
-
-    slopesT <- is.contained(simple.slopes, vars)
-    if(!is.null(simple.slopes) && slopesT==TRUE && int.term==TRUE){
-      #Estimate y at values of var
-      slopemeans <- lsmeans(lm.model.object,as.formula(lsformula), at=atval)
-      slopetest <- summary(pairs(slopemeans), adjust="none")
-      slopemeans <- summary(slopemeans)
-      slopemeans <- plyr::rename(slopemeans, c("lsmean"="Predicted Mean","lower.CL"="LLCI","upper.CL"="ULCI"))
-
-      #Tests of Slopes
-      slopetest <- round_df(slopetest,digits)
-      slopetest$p.value <- format.pval(slopetest$p.value, eps = .001, digits = digits)
-      slopetest <- plyr::rename(slopetest, c("contrast"="Contrast","estimate"="Estimate","t.ratio"="t","p.value"="p"))
-    }
+      # for(var in simple.slopes){
+    #
+    #     unique_x <- length(unique(data[[var]]))
+    #
+    #     if(unique_x==2){
+    #       #Add parameters to list for at= command
+    #       atval[[var]] <- c(0,1)
+    #       #jtools::sim_slopes(lm.model.object, pred = simple.slopes[var], modx = var[2], modx.values=unique(data[[var]]), johnson_neyman = FALSE, digits=digits)
+    #     }else{
+    #       plusSD <- 0
+    #       minusSD <- 1
+    #       #print(sd(data[[var]]))
+    #       #plusSD <- mean(data[,var])+sd(data[[var]])
+    #       #minusSD <- mean(data[[,var])-sd(data[[var]])
+    #       plusSD <- mean(data[[var]])+sd(data[[var]])
+    #       minusSD <- mean(data[[var]])-sd(data[[var]])
+    #       slopeval <- list(round(minusSD,digits),round(plusSD,digits))
+    #
+    #
+    #       #Add parameters to list for at= command
+    #       atval[[var]] <- c(as.numeric(slopeval[1]),as.numeric(slopeval[2]))
+    #       #jtools::sim_slopes(lm.model.object, pred = var[1], modx = mindset, modx.values=c(0,1), johnson_neyman = FALSE, digits=digits)
+    #     }
+    #
+    # }
+    #
+    # slopesT <- is.contained(simple.slopes, vars)
+    # if(!is.null(simple.slopes) && slopesT==TRUE && int.term==TRUE){
+    #   #Estimate y at values of var
+    #   slopemeans <- lsmeans(lm.model.object,as.formula(lsformula), at=atval)
+    #   slopetest <- summary(pairs(slopemeans), adjust="none")
+    #   slopemeans <- summary(slopemeans)
+    #   slopemeans <- plyr::rename(slopemeans, c("lsmean"="Predicted Mean","lower.CL"="LLCI","upper.CL"="ULCI"))
+    #
+    #   #Tests of Slopes
+    #   slopetest <- round_df(slopetest,digits)
+    #   slopetest$p.value <- format.pval(slopetest$p.value, eps = .001, digits = digits)
+    #   slopetest <- plyr::rename(slopetest, c("contrast"="Contrast","estimate"="Estimate","t.ratio"="t","p.value"="p"))
+    #
+    #   #TRY to test slopes with continuous
+    #
+    #     data[[simple.slopes[2]]] <- as.factor(data[[simple.slopes[2]]])
+    #
+    #   slopemeans <- lsmeans(lm.model.object,as.formula(lsformula))
+    #   slopetest <- summary(pairs(slopemeans), adjust="none")
+    #   slopemeans <- summary(slopemeans)
+    #   slopemeans <- plyr::rename(slopemeans, c("lsmean"="Predicted Mean","lower.CL"="LLCI","upper.CL"="ULCI"))
+    #
+    #   #Tests of Slopes
+    #   slopetest <- round_df(slopetest,digits)
+    #   slopetest$p.value <- format.pval(slopetest$p.value, eps = .001, digits = digits)
+    #   slopetest <- plyr::rename(slopetest, c("contrast"="Contrast","estimate"="Estimate","t.ratio"="t","p.value"="p"))
+    #   }
 
     #Print output
     if (output=="r"){
+      options(width = 200)
       cat(paste("\n",modelname[modelnum],"\n"), sep = "\n")
       #Print Header
       cat(paste("OLS Regression \n \n Model = ", as.character(formula.item), "\n Outcome = ", vars[1],"\n Predictors = ",paste(vars[2:length(vars)], collapse = ", "),"\n Observations = ",nrow(data),"\n"),sep="")
@@ -351,11 +377,37 @@ regression <- function(y=NULL,
       print(totSummary.tbl, row.names = FALSE)
       f.sig = pf(lm.summary$fstatistic[1], lm.summary$fstatistic[2],lm.summary$fstatistic[3], lower.tail = FALSE)
       cat("\nF(",lm.summary$fstatistic[2],",",lm.summary$fstatistic[3],") = ",round(lm.summary$fstatistic[1],digits), ", p = ", round(f.sig,digits) ,", R^2 = ", round(lm.summary$r.squared, digits), ", Adjusted R^2 = ", round(lm.summary$adj.r.squared, digits),"\n", sep="")
-      #Print Simple Slopes
-      if(!is.null(simple.slopes) && slopesT==TRUE && int.term==TRUE){
-        #print
-        print(slopemeans, row.names = FALSE)
-        print(slopetest, row.names = FALSE)
+
+      ## Check if simple.slope includes an interaction term and if interaction term is in the model
+      slopesT <- list()
+      int.term <- list()
+      for(simple.slopes2 in simple.slopes){
+         ##Check if simple.slope includes an interaction term
+         int.term[simple.slopes2] <- grepl("*", simple.slopes2, fixed = TRUE)
+          simple.slopes2 <- sort(unlist(strsplit(simple.slopes2, "*", fixed = TRUE)))
+          for (vars in totSummary.tbl[["Term"]]){
+            RegTerms <- sort(unlist(strsplit(vars, ":", fixed = TRUE)))
+            test_slope <- identical(as.list(simple.slopes2),as.list(RegTerms))
+            if(test_slope==TRUE){
+              break
+          }
+        }
+        if(test_slope==TRUE){
+          slopesT <- c(slopesT,TRUE)
+        }else{
+          slopesT <- c(slopesT,FALSE)
+        }
+     }
+      #Print simple slopes if requested, and if interaction term is in request and in the model
+      if(!is.null(simple.slopes) && all(slopesT==TRUE) && all(int.term==TRUE)){
+        cat("\n")
+        simpleTest(formula=formula.item,simple.slopesV=simple.slopes,data=data,digits=digits, output=output)
+      }else if(!all(int.term==TRUE)){
+        cat("\nSimple Slopes Analysis\n")
+        cat("\nWarning: One or more simple.slopes provided does not contain an interaction term. Must be in form 'x1*x2'\n")
+      }else if(!all(slopesT==TRUE)){
+        cat("\nSimple Slopes Analysis\n")
+        cat("\nWarning: One or more interaction terms in simple.slopes was not found in the model: ",model," \n")
       }
     }else if (output=="html"){
       cat(paste("<h3>", modelname[modelnum],"</h3>"))
@@ -424,10 +476,23 @@ regression <- function(y=NULL,
       model.params <- paste("F(",lm.summary$fstatistic[2],",",lm.summary$fstatistic[3],") = ",round(lm.summary$fstatistic[1],digits), ", p = ",round(f.sig,digits) , ", R^2 = ",round(lm.summary$r.squared,digits), ", Adjusted R^2 = ",round(lm.summary$adj.r.squared,digits),sep="")
       #Print APA style Table
       cat(APAhtmlTable(totSummary.tbl,round = FALSE, tidy=FALSE,tableTitle="Regression results",genNote=model.params))
+
+      ##Check if simple.slope includes an interaction term
+      int.term <- ifelse((grepl("*", simple.slopes)==TRUE),TRUE,FALSE)
+      ## Check if interaction term is in the model
+      simple.slopes2 <- sort(unlist(strsplit(simple.slopes, "*", fixed = TRUE)))
+      for (vars in totSummary.tbl[["Term"]]){
+        RegTerms <- sort(unlist(strsplit(vars, ":", fixed = TRUE)))
+        slopesT <- identical(as.list(simple.slopes2),as.list(RegTerms))
+        if(slopesT==TRUE){
+          break
+        }
+      }
+
+      #Print simple slopes if requested
       if(!is.null(simple.slopes) && slopesT==TRUE && int.term==TRUE){
-        #print
-        cat(APAhtmlTable(slopemeans,round = TRUE, digits=digits, tidy=FALSE,tableTitle="LSMeans results"))
-        cat(APAhtmlTable(slopetest,round = TRUE, digits=digits, tidy=FALSE,tableTitle="Test of Difference in Slopes"))
+        cat("<h5>Simple Slopes Analyses</h5>")
+        cat(simpleTest(formula=formula.item,simple.slopesV=simple.slopes,data=data,digits=digits, output=output))
       }
     }
     if(plot==TRUE){
@@ -522,4 +587,129 @@ semicorR <- function(x=NULL, y=NULL, cov=NULL, data=NULL){
   resX <- residuals(lm(as.formula(lm1.formula), data=data, na.action=na.exclude))
   s = as.matrix(cbind(data[y],resX))
   return(cor(s[,1], s[,2], use="complete.obs"))
+}
+simpleTest <- function(formula=NULL,simple.slopesV=NULL,data=NULL, digits=3, output="r"){
+  for(slopes in simple.slopesV){
+    simple.slopes <- unlist(strsplit(slopes,split="*", fixed=TRUE))
+
+    model <- lm(formula=as.formula(formula),data=data)
+    for(i in 1:length(simple.slopes)){
+      mods <- simple.slopes[-i]
+      if(length(simple.slopes)==2){
+        #mods <- c(mods,NULL)
+        unique_x <- length(unique(data[[mods[1]]]))
+        ## Set levels of dichotomous mod_x
+        if (unique_x==2){
+          mod.level <- unique(data[[mods[1]]])
+        }else{
+          mod.level <- NULL
+        }
+        slopes.output <- do.call(jtools::sim_slopes, list(model, pred=as.name(simple.slopes[i]),modx=as.name(mods[1]),modx.values=mod.level, johnson_neyman = FALSE, digits=digits))
+        if(output=="r"){
+          print(slopes.output)
+        }else if(output=="html"){
+          title <- paste("Slope of", simple.slopes[i], "at levels of", mods[1])
+          slopes.output <- broom::tidy(slopes.output)
+          #slopes.output$p.value <- format.pval(slopes.output$p.value, eps = .001, digits = digits)
+          slopes.output <- plyr::rename(slopes.output, c("estimate"="Estimate","std.error"="SE","statistic"="t","p.value"="p","conf.low"="LLCI","conf.high"="ULCI","term"="Moderator"))
+          slopes.output <- slopes.output[c("Estimate","SE","t","p","LLCI","ULCI","Moderator")]
+          cat(simplePsych::APAhtmlTable(slopes.output, tableTitle=title, round=TRUE, digits=digits, tidy=FALSE,leftColAlign = "left"))
+        }
+      }else if(length(simple.slopes)==3){
+        unique_x <- length(unique(data[[mods[1]]]))
+        unique_x2 <- length(unique(data[[mods[2]]]))
+        ## Set levels of dichotomous mod_x
+        if (unique_x==2){
+          mod.level <- unique(data[[mods[1]]])
+        }else{
+          mod.level <- NULL
+        }
+        ##Mod2 levels
+        if (unique_x2==2){
+          mod2.level <- unique(data[[mods[2]]])
+        }else{
+          mod2.level <- NULL
+        }
+        slopes.output <- do.call(jtools::sim_slopes, list(model, pred=as.name(simple.slopes[i]),modx=as.name(mods[1]),modx.values=mod.level, mod2=as.name(mods[2]), mod2.values=mod2.level, johnson_neyman = FALSE, digits=digits))
+
+        ##Print Output appropriately
+        if(output=="r"){
+          print(slopes.output)
+        }else if(output=="html"){
+          title <- paste("Slope of", simple.slopes[i], "at levels of", mods[1], "and", mods[2])
+          slopes.output <- broom::tidy(slopes.output)
+          #slopes.output$p.value <- format.pval(slopes.output$p.value, eps = .001, digits = digits)
+          slopes.output <- plyr::rename(slopes.output,
+                                        c("estimate"="Estimate","std.error"="SE","statistic"="t","p.value"="p"
+                                          ,"conf.low"="LLCI","conf.high"="ULCI","term"="Moderator1","mod2.term"="Moderator2"))
+          slopes.output <- slopes.output[c("Estimate","SE","t","p","LLCI","ULCI","Moderator1","Moderator2")]
+          cat(simplePsych::APAhtmlTable(slopes.output, tableTitle=title, round=TRUE, digits=digits, tidy=FALSE,leftColAlign = "left"))
+        }
+
+      }
+    }
+  }
+}
+
+PlotSimples <- function(formula=NULL,simple.slopes=NULL,data=NULL, digits=3, output="r"){
+  for(slopes in simple.slopesV){
+    simple.slopes <- unlist(strsplit(slopes,split="*", fixed=TRUE))
+
+    model <- lm(formula=as.formula(formula),data=data)
+    for(i in 1:length(simple.slopes)){
+      mods <- simple.slopes[-i]
+      if(length(simple.slopes)==2){
+        #mods <- c(mods,NULL)
+        unique_x <- length(unique(data[[mods[1]]]))
+        ## Set levels of dichotomous mod_x
+        if (unique_x==2){
+          mod.level <- unique(data[[mods[1]]])
+        }else{
+          mod.level <- NULL
+        }
+        slopes.output <- do.call(jtools::sim_slopes, list(model, pred=as.name(simple.slopes[i]),modx=as.name(mods[1]),modx.values=mod.level, johnson_neyman = FALSE, digits=digits))
+        if(output=="r"){
+          print(slopes.output)
+        }else if(output=="html"){
+          title <- paste("Slope of", simple.slopes[i], "at levels of", mods[1])
+          slopes.output <- broom::tidy(slopes.output)
+          #slopes.output$p.value <- format.pval(slopes.output$p.value, eps = .001, digits = digits)
+          slopes.output <- plyr::rename(slopes.output, c("estimate"="Estimate","std.error"="SE","statistic"="t","p.value"="p","conf.low"="LLCI","conf.high"="ULCI","term"="Moderator"))
+          slopes.output <- slopes.output[c("Estimate","SE","t","p","LLCI","ULCI","Moderator")]
+          cat(simplePsych::APAhtmlTable(slopes.output, tableTitle=title, round=TRUE, digits=digits, tidy=FALSE,leftColAlign = "left"))
+        }
+      }else if(length(simple.slopes)==3){
+        unique_x <- length(unique(data[[mods[1]]]))
+        unique_x2 <- length(unique(data[[mods[2]]]))
+        ## Set levels of dichotomous mod_x
+        if (unique_x==2){
+          mod.level <- unique(data[[mods[1]]])
+        }else{
+          mod.level <- NULL
+        }
+        ##Mod2 levels
+        if (unique_x2==2){
+          mod2.level <- unique(data[[mods[2]]])
+        }else{
+          mod2.level <- NULL
+        }
+        slopes.output <- do.call(jtools::sim_slopes, list(model, pred=as.name(simple.slopes[i]),modx=as.name(mods[1]),modx.values=mod.level, mod2=as.name(mods[2]), mod2.values=mod2.level, johnson_neyman = FALSE, digits=digits))
+
+        ##Print Output appropriately
+        if(output=="r"){
+          print(slopes.output)
+        }else if(output=="html"){
+          title <- paste("Slope of", simple.slopes[i], "at levels of", mods[1], "and", mods[2])
+          slopes.output <- broom::tidy(slopes.output)
+          #slopes.output$p.value <- format.pval(slopes.output$p.value, eps = .001, digits = digits)
+          slopes.output <- plyr::rename(slopes.output,
+                                        c("estimate"="Estimate","std.error"="SE","statistic"="t","p.value"="p"
+                                          ,"conf.low"="LLCI","conf.high"="ULCI","term"="Moderator1","mod2.term"="Moderator2"))
+          slopes.output <- slopes.output[c("Estimate","SE","t","p","LLCI","ULCI","Moderator1","Moderator2")]
+          cat(simplePsych::APAhtmlTable(slopes.output, tableTitle=title, round=TRUE, digits=digits, tidy=FALSE,leftColAlign = "left"))
+        }
+
+      }
+    }
+  }
 }
